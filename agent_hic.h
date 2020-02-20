@@ -18,11 +18,11 @@
 *******************************************************************************/
 
 #pragma once
-
+#include "image.h"
 #include "baseclient.h"
 #include "defaultdevice.h"
 #define MAX_GROUP_COUNT 16
-#define NB_DEVICES 5
+#define NB_DEVICES 6
 
 
 class Group;
@@ -70,6 +70,7 @@ class HICAgent : public virtual INDI::DefaultDevice, public virtual INDI::BaseCl
     bool isCCDConnected();
     bool isFilterConnected();
     bool isTelescopeConnected();
+    bool isGuideConnected();
     void defineProperties();
     void deleteProperties();
     void initiateNextFilter();
@@ -89,6 +90,9 @@ class HICAgent : public virtual INDI::DefaultDevice, public virtual INDI::BaseCl
     char *controlledFocuser { nullptr };
     char *controlledFilterWheel { nullptr };
     char *controlledGPS { nullptr };
+    char *controlledGuide { nullptr };
+    HICImage CCDImage;
+    HICImage GuideImage;
 
     ITextVectorProperty ControlledDeviceTP;
     IText ControlledDeviceT[NB_DEVICES];

@@ -17,9 +17,10 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-
+#include "image.h"
 #include "agent_hic.h"
 #include "indistandardproperty.h"
+
 
 #include <cstring>
 #include <algorithm>
@@ -271,6 +272,7 @@ bool HICAgent::initProperties()
     IUFillText(&ControlledDeviceT[2], "SCOPE", "Telescope", "Telescope Simulator");
     IUFillText(&ControlledDeviceT[3], "FOCUS", "Focuser", "Focuser Simulator");
     IUFillText(&ControlledDeviceT[4], "GPS", "GPS", "GPS Simulator");
+    IUFillText(&ControlledDeviceT[5], "GUIDE", "Guide", "Guide Simulator");
     IUFillTextVector(&ControlledDeviceTP, ControlledDeviceT, NB_DEVICES, getDefaultName(), "DEVICES", "Controlled devices",
                      MAIN_CONTROL_TAB, IP_RW, 60, IPS_IDLE);
     controlledCCD         = ControlledDeviceT[0].text;
@@ -278,12 +280,14 @@ bool HICAgent::initProperties()
     controlledTelescope   = ControlledDeviceT[2].text;
     controlledFocuser     = ControlledDeviceT[3].text;
     controlledGPS         = ControlledDeviceT[4].text;
+    controlledGuide       = ControlledDeviceT[5].text;
 
     IUFillLight(&StatusL[0], "CCD", controlledCCD, IPS_IDLE);
     IUFillLight(&StatusL[1], "FILTER", controlledFilterWheel, IPS_IDLE);
     IUFillLight(&StatusL[2], "SCOPE", controlledTelescope, IPS_IDLE);
     IUFillLight(&StatusL[3], "FOCUS", controlledFocuser, IPS_IDLE);
     IUFillLight(&StatusL[4], "GPS", controlledGPS, IPS_IDLE);
+    IUFillLight(&StatusL[5], "GUIDE", controlledGuide, IPS_IDLE);
     IUFillLightVector(&StatusLP, StatusL, NB_DEVICES, getDefaultName(), "STATUS", "Controlled devices", STATUS_TAB, IPS_IDLE);
 
     IUFillNumber(&ProgressN[0], "GROUP", "Current group", "%3.0f", 1, MAX_GROUP_COUNT, 1, 0);
@@ -460,6 +464,7 @@ bool HICAgent::ISNewText(const char *dev, const char *name, char *texts[], char 
             strncpy(StatusL[2].label, ControlledDeviceT[2].text, sizeof(StatusL[2].label));
             strncpy(StatusL[3].label, ControlledDeviceT[3].text, sizeof(StatusL[3].label));
             strncpy(StatusL[4].label, ControlledDeviceT[4].text, sizeof(StatusL[4].label));
+            strncpy(StatusL[5].label, ControlledDeviceT[5].text, sizeof(StatusL[5].label));
             return true;
         }
         if (std::string{name} == std::string{ImageNameTP.name})
@@ -491,9 +496,10 @@ bool HICAgent::Connect()
     watchDevice(controlledTelescope);
     watchDevice(controlledFocuser);
     watchDevice(controlledGPS);
+    watchDevice(controlledGuide);
     connectServer();
     setBLOBMode(B_ALSO, controlledCCD, nullptr);
-
+    setBLOBMode(B_ALSO, controlledGuide, nullptr);
     return true;
 }
 
@@ -515,6 +521,7 @@ void HICAgent::serverConnected()
     StatusL[2].s = IPS_ALERT;
     StatusL[3].s = IPS_ALERT;
     StatusL[4].s = IPS_ALERT;
+    StatusL[5].s = IPS_ALERT;
     IDSetLight(&StatusLP, nullptr);
 }
 
@@ -533,6 +540,8 @@ void HICAgent::newDevice(INDI::BaseDevice *dp)
         StatusL[3].s = IPS_BUSY;
     if (deviceName == controlledGPS)
         StatusL[4].s = IPS_BUSY;
+    if (deviceName == controlledGuide)
+        StatusL[5].s = IPS_BUSY;
 
     IDSetLight(&StatusLP, nullptr);
 }
@@ -605,7 +614,18 @@ void HICAgent::newProperty(INDI::Property *property)
                 LOGF_DEBUG("Connecting %s", controlledGPS);
             }
         }
-
+        if (deviceName == controlledGuide)
+        {
+            if (state)
+            {
+                StatusL[5].s = IPS_OK;
+            }
+            else
+            {
+                connectDevice(controlledGuide);
+                LOGF_DEBUG("Connecting %s", controlledGuide);
+            }
+        }
         IDSetLight(&StatusLP, nullptr);
     }
 }
@@ -622,6 +642,22 @@ void HICAgent::removeDevice(INDI::BaseDevice *dp)
 
 void HICAgent::newBLOB(IBLOB *bp)
 {
+    LOGF_INFO("Client receive new blob from  %s\n", bp->bvp->device);
+    CCDImage.LoadFromBlob(bp);
+    LOGF_INFO("HFD=%f\n", CCDImage.hfd);
+    if (bp->bvp->device == controlledCCD)
+    {
+        CCDImage.LoadFromBlob(bp);
+        LOGF_INFO("HFD=%f\n", CCDImage.hfd);
+    }
+    if (bp->bvp->device == controlledGuide)
+    {
+        GuideImage.LoadFromBlob(bp);
+        LOGF_INFO("HFD=%f\n", GuideImage.hfd);
+    }
+
+
+
     if (ProgressNP.s == IPS_BUSY)
     {
         char name[128]={0};
@@ -720,7 +756,17 @@ void HICAgent::newSwitch(ISwitchVectorProperty *svp)
                 StatusL[4].s = IPS_BUSY;
             }
         }
-        IDSetLight(&StatusLP, nullptr);
+        if (deviceName == controlledGuide)
+        {
+            if (state)
+            {
+                StatusL[5].s = IPS_OK;
+            }
+            else
+            {
+                StatusL[5].s = IPS_BUSY;
+            }
+        }        IDSetLight(&StatusLP, nullptr);
     }
 }
 

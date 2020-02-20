@@ -14,8 +14,8 @@ find_package(ZLIB REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Nova REQUIRED)
 find_package(GSL REQUIRED)
-#find_package(OpenCV REQUIRED )
-#find_package(CImg REQUIRED )
+find_package(OpenCV REQUIRED )
+find_package(CImg REQUIRED )
 
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
@@ -35,8 +35,10 @@ set(hic_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/agent_hic.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/group.cpp
    )
+add_library(image ${CMAKE_CURRENT_SOURCE_DIR}/image.cpp)
 add_executable(indi_hic_agent ${hic_SRCS})
-target_link_libraries(indi_hic_agent indidriver indiclient ${INDI_LIBRARIES} ${CFITSIO_LIBRARIES} ${ZLIB_LIBRARY}  ${NOVA_LIBRARIES} ${GSL_LIBRARIES} ${ZLIB_LIBRARY} ${OpenCV_LIBS} z -pthread)
+
+target_link_libraries(indi_hic_agent indidriver indiclient image ${INDI_LIBRARIES} ${CFITSIO_LIBRARIES} ${ZLIB_LIBRARY}  ${NOVA_LIBRARIES} ${GSL_LIBRARIES} ${ZLIB_LIBRARY} ${CIMG_LIBRARIES} ${OpenCV_LIBS} z -pthread)
 
 install(TARGETS indi_hic_agent RUNTIME DESTINATION bin)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/indi_hic_agent.xml DESTINATION ${INDI_DATA_DIR})
