@@ -40,6 +40,7 @@ Testing
 Start indi server  :
 
 .. code-block:: shell
+
   indiserver -v -m 100 indi_hic_agent indi_simulator_telescope indi_simulator_ccd indi_simulator_focus indi_simulator_guide indi_simulator_wheel indi_simulator_gps
 
 And connect with any client providing access to driver capabilities (Kstars control panel, AstrophotoPlus, Mobindi ...)
