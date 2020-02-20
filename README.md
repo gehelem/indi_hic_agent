@@ -1,2 +1,2 @@
 # indi_hic_agent
-Indi Headless Controller Agent
+Headless Indi Controller Agent
