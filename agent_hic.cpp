@@ -29,7 +29,9 @@
 #include "group.h"
 
 #define DOWNLOAD_TAB "Download images"
-#define STATUS_TAB "Status"
+//#define STATUS_TAB "Status"
+#define IMAGER_TAB "Imager"
+#define FOCUS_TAB "Focuser"
 #define IMAGE_NAME   "%s/%s_%d_%03d%s"
 #define IMAGE_PREFIX "_TMP_"
 
@@ -202,6 +204,30 @@ void HICAgent::abortBatch()
     IDSetNumber(&ProgressNP, "Batch aborted");
 }
 
+void HICAgent::startFocus()
+{
+    INumberVectorProperty *ccd_exposure = nullptr;
+    ccd_exposure = getDevice(controlledCCD)->getNumber("CCD_EXPOSURE");
+    ccd_exposure->np[0].value = FocusEXPN[0].value;
+    sendNewNumber(ccd_exposure);
+
+    LOG_INFO("Focus started");
+
+    /*ProgressN[0].value = group = 1;
+    ProgressN[1].value = image = 1;
+    maxImage                   = currentGroup()->count();
+    ProgressNP.s               = IPS_BUSY;
+    IDSetNumber(&ProgressNP, nullptr);
+    initiateNextFilter();*/
+}
+
+void HICAgent::abortFocus()
+{
+    /*ProgressNP.s = IPS_ALERT;
+    IDSetNumber(&ProgressNP, "Focus aborted");*/
+    LOG_DEBUG("Focus aborted");
+}
+
 void HICAgent::batchDone()
 {
     ProgressNP.s = IPS_OK;
@@ -264,7 +290,7 @@ bool HICAgent::initProperties()
     addDebugControl();
 
     IUFillNumber(&GroupCountN[0], "GROUP_COUNT", "Image group count", "%3.0f", 1, MAX_GROUP_COUNT, 1, maxGroup = 1);
-    IUFillNumberVector(&GroupCountNP, GroupCountN, 1, getDefaultName(), "GROUPS", "Image groups", MAIN_CONTROL_TAB, IP_RW,
+    IUFillNumberVector(&GroupCountNP, GroupCountN, 1, getDefaultName(), "GROUPS", "Image groups", IMAGER_TAB, IP_RW,
                        60, IPS_IDLE);
 
     IUFillText(&ControlledDeviceT[0], "CCD", "CCD", "CCD Simulator");
@@ -288,22 +314,39 @@ bool HICAgent::initProperties()
     IUFillLight(&StatusL[3], "FOCUS", controlledFocuser, IPS_IDLE);
     IUFillLight(&StatusL[4], "GPS", controlledGPS, IPS_IDLE);
     IUFillLight(&StatusL[5], "GUIDE", controlledGuide, IPS_IDLE);
-    IUFillLightVector(&StatusLP, StatusL, NB_DEVICES, getDefaultName(), "STATUS", "Controlled devices", STATUS_TAB, IPS_IDLE);
+    IUFillLightVector(&StatusLP, StatusL, NB_DEVICES, getDefaultName(), "STATUS", "Controlled devices", MAIN_CONTROL_TAB, IPS_IDLE);
 
     IUFillNumber(&ProgressN[0], "GROUP", "Current group", "%3.0f", 1, MAX_GROUP_COUNT, 1, 0);
     IUFillNumber(&ProgressN[1], "IMAGE", "Current image", "%3.0f", 1, 100, 1, 0);
     IUFillNumber(&ProgressN[2], "REMAINING_TIME", "Remaining time", "%5.2f", 0, 36000, 0, 0.0);
-    IUFillNumberVector(&ProgressNP, ProgressN, 3, getDefaultName(), "PROGRESS", "Batch execution progress", STATUS_TAB,
+    IUFillNumberVector(&ProgressNP, ProgressN, 3, getDefaultName(), "PROGRESS", "Batch execution progress", IMAGER_TAB,
                        IP_RO, 60, IPS_IDLE);
 
     IUFillSwitch(&BatchS[0], "START", "Start batch", ISS_OFF);
     IUFillSwitch(&BatchS[1], "ABORT", "Abort batch", ISS_OFF);
-    IUFillSwitchVector(&BatchSP, BatchS, 2, getDefaultName(), "BATCH", "Batch control", MAIN_CONTROL_TAB, IP_RW, ISR_NOFMANY,
+    IUFillSwitchVector(&BatchSP, BatchS, 2, getDefaultName(), "BATCH", "Batch control", IMAGER_TAB, IP_RW, ISR_NOFMANY,
+                       60, IPS_IDLE);
+
+    IUFillSwitch(&FocusS[0], "START_FOCUS", "Start focus", ISS_OFF);
+    IUFillSwitch(&FocusS[1], "ABORT_FOCUS", "Abort focus", ISS_OFF);
+    IUFillSwitchVector(&FocusSP, FocusS, 2, getDefaultName(), "BATCH_FOCUS", "Focus control", FOCUS_TAB, IP_RW, ISR_NOFMANY,
+                       60, IPS_IDLE);
+
+    IUFillNumber(&FocusIMGN[0], "FOCUS_IMG_HFD", "HFD", "%5.2f", -1,100,0,-1);
+    IUFillNumber(&FocusIMGN[1], "FOCUS_IMG_MIN", "Min", "%5.0f", -1,100,0,-1);
+    IUFillNumber(&FocusIMGN[2], "FOCUS_IMG_MAX", "Max", "%5.0f", -1,100,0,-1);
+    IUFillNumber(&FocusIMGN[3], "FOCUS_IMG_AVG", "Average", "%5.2f", -1,100,0,-1);
+    IUFillNumber(&FocusIMGN[4], "FOCUS_IMG_MED", "Median", "%5.2f", -1,100,0,-1);
+    IUFillNumberVector(&FocusIMGNP, FocusIMGN, 5, getDefaultName(), "FOCUS_IMG", "Image statistics", FOCUS_TAB, IP_RO,
+                       60, IPS_IDLE);
+
+    IUFillNumber(&FocusEXPN[0], "FOCUS_EXP_DURATION", "Duration (s)", "%5.2f", 1,36000,0,100);
+    IUFillNumberVector(&FocusEXPNP, FocusEXPN, 5, getDefaultName(), "FOCUS_EXP", "Image exposure", FOCUS_TAB, IP_RW,
                        60, IPS_IDLE);
 
     IUFillText(&ImageNameT[0], "IMAGE_FOLDER", "Image folder", "/tmp");
     IUFillText(&ImageNameT[1], "IMAGE_PREFIX", "Image prefix", "IMG");
-    IUFillTextVector(&ImageNameTP, ImageNameT, 2, getDefaultName(), "IMAGE_NAME", "Image name", OPTIONS_TAB, IP_RW, 60,
+    IUFillTextVector(&ImageNameTP, ImageNameT, 2, getDefaultName(), "IMAGE_NAME", "Image name", IMAGER_TAB, IP_RW, 60,
                      IPS_IDLE);
 
     IUFillNumber(&DownloadN[0], "GROUP", "Group", "%3.0f", 1, MAX_GROUP_COUNT, 1, 1);
@@ -361,20 +404,27 @@ bool HICAgent::updateProperties()
         defineNumber(&ProgressNP);
         BatchSP.s = IPS_IDLE;
         defineSwitch(&BatchSP);
+        FocusSP.s = IPS_IDLE;
+        defineSwitch(&FocusSP);
         DownloadN[0].value = 0;
         DownloadN[1].value = 0;
         DownloadNP.s       = IPS_IDLE;
         defineNumber(&DownloadNP);
         FitsBP.s = IPS_IDLE;
         defineBLOB(&FitsBP);
+        defineNumber(&FocusEXPNP);
+        defineNumber(&FocusIMGNP);
     }
     else
     {
         deleteProperty(StatusLP.name);
         deleteProperty(ProgressNP.name);
         deleteProperty(BatchSP.name);
+        deleteProperty(FocusSP.name);
         deleteProperty(DownloadNP.name);
         deleteProperty(FitsBP.name);
+        deleteProperty(FocusIMGNP.name);
+        deleteProperty(FocusEXPNP.name);
     }
     return true;
 }
@@ -444,6 +494,25 @@ bool HICAgent::ISNewSwitch(const char *dev, const char *name, ISState *states, c
             IDSetSwitch(&BatchSP, nullptr);
             return true;
         }
+        if (std::string{name} == std::string{FocusSP.name})
+        {
+            for (int i = 0; i < n; i++)
+            {
+                if (strcmp(names[i], FocusS[0].name) == 0 && states[i] == ISS_ON)
+                {
+                    if (!isRunning())
+                        startFocus();
+                }
+                if (strcmp(names[i], FocusS[1].name) == 0 && states[i] == ISS_ON)
+                {
+                    if (isRunning())
+                        abortFocus();
+                }
+            }
+            FocusSP.s = IPS_OK;
+            IDSetSwitch(&FocusSP, nullptr);
+            return true;
+        }
     }
     return DefaultDevice::ISNewSwitch(dev, name, states, names, n);
 }
@@ -458,6 +527,7 @@ bool HICAgent::ISNewText(const char *dev, const char *name, char *texts[], char 
             IDSetText(&ControlledDeviceTP, nullptr);
             strncpy(StatusL[0].label, ControlledDeviceT[0].text, sizeof(StatusL[0].label));
             strncpy(CCDImageExposureNP.device, ControlledDeviceT[0].text, sizeof(CCDImageExposureNP.device));
+            strncpy(FocusEXPNP.device, ControlledDeviceT[0].text, sizeof(FocusEXPNP.device));
             strncpy(CCDImageBinNP.device, ControlledDeviceT[0].text, sizeof(CCDImageBinNP.device));
             strncpy(StatusL[1].label, ControlledDeviceT[1].text, sizeof(StatusL[1].label));
             strncpy(FilterSlotNP.device, ControlledDeviceT[1].text, sizeof(FilterSlotNP.device));
@@ -643,17 +713,22 @@ void HICAgent::removeDevice(INDI::BaseDevice *dp)
 void HICAgent::newBLOB(IBLOB *bp)
 {
     LOGF_INFO("Client receive new blob from  %s\n", bp->bvp->device);
-    CCDImage.LoadFromBlob(bp);
-    LOGF_INFO("HFD=%f\n", CCDImage.hfd);
-    if (bp->bvp->device == controlledCCD)
+    //CCDImage.LoadFromBlob(bp);
+    if (strcmp(bp->bvp->device, controlledCCD) == 0)
     {
         CCDImage.LoadFromBlob(bp);
-        LOGF_INFO("HFD=%f\n", CCDImage.hfd);
+        //LOGF_INFO("HFD=%f MED=%f\n", CCDImage.hfd,CCDImage.med);
+        FocusIMGN[0].value = CCDImage.hfd;
+        FocusIMGN[1].value = CCDImage.min;
+        FocusIMGN[2].value = CCDImage.max;
+        FocusIMGN[3].value = CCDImage.mean;
+        FocusIMGN[4].value = CCDImage.med;
+        IDSetNumber(&FocusIMGNP, nullptr);
     }
-    if (bp->bvp->device == controlledGuide)
+    if (strcmp(bp->bvp->device, controlledGuide) == 0)
     {
         GuideImage.LoadFromBlob(bp);
-        LOGF_INFO("HFD=%f\n", GuideImage.hfd);
+        LOGF_INFO("HFD=%f MED=%f\n", GuideImage.hfd,GuideImage.med);
     }
 
 

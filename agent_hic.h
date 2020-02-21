@@ -78,6 +78,8 @@ class HICAgent : public virtual INDI::DefaultDevice, public virtual INDI::BaseCl
     void startBatch();
     void abortBatch();
     void batchDone();
+    void startFocus();
+    void abortFocus();
     void initiateDownload();
 
     char format[16];
@@ -102,6 +104,8 @@ class HICAgent : public virtual INDI::DefaultDevice, public virtual INDI::BaseCl
     INumber ProgressN[3];
     ISwitchVectorProperty BatchSP;
     ISwitch BatchS[2];
+    ISwitchVectorProperty FocusSP;
+    ISwitch FocusS[2];
     ILightVectorProperty StatusLP;
     ILight StatusL[NB_DEVICES];
     ITextVectorProperty ImageNameTP;
@@ -110,6 +114,11 @@ class HICAgent : public virtual INDI::DefaultDevice, public virtual INDI::BaseCl
     INumber DownloadN[2];
     IBLOBVectorProperty FitsBP;
     IBLOB FitsB[1];
+
+    INumberVectorProperty FocusIMGNP;
+    INumber FocusIMGN[5];
+    INumberVectorProperty FocusEXPNP;
+    INumber FocusEXPN[5];
 
     INumberVectorProperty CCDImageExposureNP;
     INumber CCDImageExposureN[1];
