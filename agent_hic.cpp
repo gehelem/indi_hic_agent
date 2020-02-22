@@ -206,19 +206,9 @@ void HICAgent::abortBatch()
 
 void HICAgent::startFocus()
 {
-    INumberVectorProperty *ccd_exposure = nullptr;
-    ccd_exposure = getDevice(controlledCCD)->getNumber("CCD_EXPOSURE");
-    ccd_exposure->np[0].value = FocusEXPN[0].value;
-    sendNewNumber(ccd_exposure);
-
     LOG_INFO("Focus started");
-
-    /*ProgressN[0].value = group = 1;
-    ProgressN[1].value = image = 1;
-    maxImage                   = currentGroup()->count();
-    ProgressNP.s               = IPS_BUSY;
-    IDSetNumber(&ProgressNP, nullptr);
-    initiateNextFilter();*/
+    std::thread t1 (&HICAgent::focusingThread,this,nullptr);
+    t1.detach();
 }
 
 void HICAgent::abortFocus()
@@ -927,3 +917,20 @@ void HICAgent::serverDisconnected(int exit_code)
 }
 
 
+void HICAgent::focusingThread(void *arg)
+{
+    LOG_INFO("Focus in thread");
+    for (int i=0;i<3;i++)
+    {
+        INumberVectorProperty *ccd_exposure = nullptr;
+        ccd_exposure = getDevice(controlledCCD)->getNumber("CCD_EXPOSURE");
+        ccd_exposure->np[0].value = FocusEXPN[0].value;
+        sendNewNumber(ccd_exposure);
+        sleep(2);
+    }
+
+    LOG_INFO("Focus finished");
+
+    ( void ) arg;
+    pthread_exit ( NULL );
+}

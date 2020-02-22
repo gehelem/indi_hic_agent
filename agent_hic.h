@@ -81,6 +81,7 @@ class HICAgent : public virtual INDI::DefaultDevice, public virtual INDI::BaseCl
     void startFocus();
     void abortFocus();
     void initiateDownload();
+    void focusingThread(void *arg);
 
     char format[16];
     int group { 0 };
