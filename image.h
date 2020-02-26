@@ -52,7 +52,7 @@ struct StarInfoT {
   FrameT hfdFrame;
   PixSubPosT cogCentroid;
   PixSubPosT subPixelInterpCentroid;
-  float hfd;
+  double hfd;
   float fwhmHorz;
   float fwhmVert;
   float maxPixValue;
@@ -79,7 +79,7 @@ public:
     double stddev;
     short stddev2;
     int vollathF4;
-    float hfd;
+    double hfd;
     unsigned short *ImageData;      // Pointer to raw data
     CImg<float> img;
     bool LoadFromBlob(IBLOB *bp);

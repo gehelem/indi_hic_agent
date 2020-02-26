@@ -356,7 +356,6 @@ bool HICAgent::initProperties()
 
     defineNumber(&GroupCountNP);
     defineText(&ControlledDeviceTP);
-    defineNumber(&FocusEXPNP);
     defineText(&ImageNameTP);
 
     for (int i = 0; i < GroupCountN[0].value; i++)

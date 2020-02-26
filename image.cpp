@@ -215,7 +215,7 @@ void HICImage::CalcStats(void)
       FrameT & hfdFrame = it->hfdFrame;
       PixSubPosT & cogCentroid = it->cogCentroid;
       PixSubPosT & subPixelInterpCentroid = it->subPixelInterpCentroid;
-      float & hfd = it->hfd;
+      double  & hfd = it->hfd;
       float & fwhmHorz = it->fwhmHorz;
       float & fwhmVert = it->fwhmVert;
       float & maxPixValue = it->maxPixValue;

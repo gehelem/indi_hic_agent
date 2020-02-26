@@ -64,6 +64,7 @@ class HICAgent : public virtual INDI::DefaultDevice, public virtual INDI::BaseCl
     virtual const char *getDefaultName();
     virtual bool Connect();
     virtual bool Disconnect();
+    virtual bool saveConfigItems(FILE *fp) override;
 
   private:
     bool isRunning();
