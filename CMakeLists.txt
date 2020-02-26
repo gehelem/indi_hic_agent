@@ -30,19 +30,18 @@ include_directories(${CIMG_INCLUDE_DIRS})
 
 include(CMakeCommon)
 
-############# hic AGENT / client ###############
+############# hic focus driver ###############
 set(hic_SRCS
-        ${CMAKE_CURRENT_SOURCE_DIR}/agent_hic.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/group.cpp
-#        ${CMAKE_CURRENT_SOURCE_DIR}/hic_focus_client.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/indi_hicfocus_driver.cpp
    )
+
 add_library(image ${CMAKE_CURRENT_SOURCE_DIR}/image.cpp)
 add_library(polynomialfit ${CMAKE_CURRENT_SOURCE_DIR}/polynomialfit.cpp)
-add_library(focus_client ${CMAKE_CURRENT_SOURCE_DIR}/hic_focus_client.cpp)
-add_executable(indi_hic_agent ${hic_SRCS})
+add_library(indi_hicfocus_client ${CMAKE_CURRENT_SOURCE_DIR}/indi_hicfocus_client.cpp)
 
-target_link_libraries(indi_hic_agent indidriver indiclient image focus_client polynomialfit ${INDI_LIBRARIES} ${CFITSIO_LIBRARIES} ${ZLIB_LIBRARY}  ${NOVA_LIBRARIES} ${GSL_LIBRARIES} ${ZLIB_LIBRARY} ${CIMG_LIBRARIES} ${OpenCV_LIBS} z -pthread)
+add_executable(indi_hicfocus_agent ${hic_SRCS})
+target_link_libraries(indi_hicfocus_agent indidriver indiclient image indi_hicfocus_client polynomialfit ${INDI_LIBRARIES} ${CFITSIO_LIBRARIES} ${ZLIB_LIBRARY}  ${NOVA_LIBRARIES} ${GSL_LIBRARIES} ${ZLIB_LIBRARY} ${CIMG_LIBRARIES} ${OpenCV_LIBS} z -pthread)
 
-install(TARGETS indi_hic_agent RUNTIME DESTINATION bin)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/indi_hic_agent.xml DESTINATION ${INDI_DATA_DIR})
+install(TARGETS indi_hicfocus_agent RUNTIME DESTINATION bin)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/indi_hicfocus_agent.xml DESTINATION ${INDI_DATA_DIR})
 

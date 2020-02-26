@@ -1,4 +1,4 @@
-#include "hic_focus_client.h"
+#include "indi_hicfocus_client.h"
 #include "polynomialfit.h"
 #include "defaultdevice.h"
 
@@ -181,7 +181,7 @@ void MyClient::newMessage(INDI::BaseDevice *dp, int messageID)
     if (strcmp(dp->getDeviceName(), MYCCD) != 0)
         return;
 
-    IDLog("Recveing message from Server:s\n", dp->messageQueue(messageID).c_str());
+    IDLog("Recveing message from Server:%s\n", dp->messageQueue(messageID).c_str());
 }
 
 /**************************************************************************************
