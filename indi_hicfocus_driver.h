@@ -18,6 +18,7 @@
 
 #pragma once
 #include "image.h"
+#include "config.h"
 #include "baseclient.h"
 #include "defaultdevice.h"
 #define NB_DEVICES 2

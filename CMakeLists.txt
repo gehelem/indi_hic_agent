@@ -5,8 +5,8 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/")
 
 include(GNUInstallDirs)
 
-set (HICAGENT_VERSION_MAJOR 0)
-set (HICAGENT_VERSION_MINOR 1)
+set (HICFOCUSAGENT_VERSION_MAJOR 0)
+set (HICFOCUSAGENT_VERSION_MINOR 1)
 
 find_package(CFITSIO REQUIRED)
 find_package(INDI COMPONENTS client driver REQUIRED)
@@ -19,7 +19,7 @@ find_package(CImg REQUIRED )
 
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/indi_hic_agent.xml.cmake ${CMAKE_CURRENT_BINARY_DIR}/indi_hic_agent.xml )
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/indi_hicfocus_agent.xml.cmake ${CMAKE_CURRENT_BINARY_DIR}/indi_hic_agent.xml )
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
