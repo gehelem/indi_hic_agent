@@ -1,3 +1,11 @@
+/*
+https://stackoverflow.com/questions/36522882/how-can-i-use-gsl-to-calculate-polynomial-regression-data-points
+https://www.lost-infinity.com/fofi-a-free-automatic-telescope-focus-finder-software/
+we should also have a look at this one :
+https://www.lost-infinity.com/v-curve-fitting-with-a-hyperbolic-function/
+*/
+
+
 #include "polynomialfit.h"
 
 

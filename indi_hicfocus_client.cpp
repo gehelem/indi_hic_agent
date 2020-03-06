@@ -1,6 +1,7 @@
 #include "indi_hicfocus_client.h"
 #include "polynomialfit.h"
 #include "defaultdevice.h"
+#include "image.h"
 
 #include <cstring>
 #include <fstream>
@@ -20,7 +21,7 @@ double chisq;
 double hfdtarget;
 
 
-char *clientCamera,*clientFocuser;
+char *clientCamera,*clientFocuser,*clientTelescope;
 HICImage cameraImage;
 
 
@@ -36,9 +37,18 @@ std::vector<double> posvector;
 std::vector<double> hfdvector;
 std::vector<double> coefficients;
 
-void HICClientStart(const char *hostname, unsigned int port, char *camera,char *focuser,int min, int max, int step, int sec)
+void HICClientStart(void)
 {
     IDLog("HICCLientStart\n");
+    HICClientRunning = true;
+    camera_client->setServer("localhost",7624);
+    //camera_client->watchDevice("HIC Focuser");
+    clientCamera=nullptr;
+    clientFocuser=nullptr;
+    camera_client->connectServer();
+    std::thread t1 (&HICClientThread,nullptr);
+    t1.detach();
+    /*IDLog("HICCLientStart\n");
     HICClientRunning = true;
     posmin=min;
     posmax=max;
@@ -54,37 +64,18 @@ void HICClientStart(const char *hostname, unsigned int port, char *camera,char *
     camera_client->setServer(hostname,port);
     camera_client->watchDevice(clientCamera);
     camera_client->watchDevice(clientFocuser);
+    camera_client->watchDevice("HIC Focuser");
     camera_client->connectServer();
     camera_client->setBLOBMode(B_ALSO, clientCamera, nullptr);
 
     std::thread t1 (&HICClientThread,nullptr);
-    t1.detach();
-}
-void HICClientStop(void)
-{
-    HICClientRunning = false;
+    t1.detach();*/
 }
 void HICClientThread(void *arg)
 {
-    IDLog("HICCLientStart\n");
-    /*sleep(5);
-    IDLog("--1");
-    ccdDevice = camera_client->getDevice(DeviceCCD);
-    IDLog("--2");
-    focuserDevice = camera_client->getDevice(DeviceFocuser);
-    IDLog("--3");
-    sleep(1);
-    focuser_pos = focuserDevice->getNumber("FOCUS_ABSOLUTE_POSITION");
-    IDLog("--4");
-    sleep(1);
-    if (focuser_pos==nullptr) IDLog("error getting focuser position");
-    IDLog("--5");*/
-    //postarget=posmin;
-    //focuser_pos->np[0].value=postarget;
-    //camera_client->sendNewNumber(focuser_pos);
+    IDLog("HICCLientStart--thread\n");
 
     while(HICClientRunning){
-            //IDLog("In Thread\n");
             sleep(1);
     };
     camera_client->disconnectServer();
@@ -92,14 +83,16 @@ void HICClientThread(void *arg)
     ( void ) arg;
     pthread_exit ( NULL );
 }
-
-
-
+void HICClientStop(void)
+{
+    HICClientRunning = false;
+}
 /**************************************************************************************
 **
 ***************************************************************************************/
 MyClient::MyClient()
 {
+    HICDevice = nullptr;
     cameraDevice = nullptr;
     focuserDevice = nullptr;
 }
@@ -111,15 +104,18 @@ MyClient::MyClient()
 ***************************************************************************************/
 void MyClient::newDevice(INDI::BaseDevice *dp)
 {
-    if (strcmp(dp->getDeviceName(), clientCamera) == 0) {
-        IDLog("Receiving %s Device...\n", dp->getDeviceName());
-        cameraDevice = dp;
+    /*if (strcmp(dp->getDeviceName(), clientCamera) == 0) {
+        IDLog("Receiving device %s ...\n", dp->getDeviceName());
+        //cameraDevice = dp;
     }
     if (strcmp(dp->getDeviceName(), clientFocuser) == 0) {
-        IDLog("Receiving %s Device...\n", dp->getDeviceName());
-        focuserDevice = dp;
+        IDLog("Receiving device %s ...\n", dp->getDeviceName());
+        //focuserDevice = dp;
+    }*/
+    if (strcmp(dp->getDeviceName(), "HIC Focuser") == 0) {
+        IDLog("Receiving device %s ...\n", dp->getDeviceName());
+        HICDevice = dp;
     }
-
 }
 
 /**************************************************************************************
@@ -127,38 +123,94 @@ void MyClient::newDevice(INDI::BaseDevice *dp)
 *************************************************************************************/
 void MyClient::newProperty(INDI::Property *property)
 {
-    if (strcmp(property->getDeviceName(), clientFocuser) == 0)
-    {
-        IDLog("Receiving %s %s property...\n",property->getDeviceName(), property->getName());
-    }
+    IDLog("Client receiving new property %s %s...\n",property->getDeviceName(), property->getName());
 
-    if (strcmp(property->getDeviceName(), clientCamera) == 0 && strcmp(property->getName(), "CONNECTION") == 0)
+    if (strcmp(property->getDeviceName(), "HIC Focuser") == 0 && strcmp(property->getName(), "HICFOCUS_DEVICES") == 0)
     {
+        //connectDevice(property->getDeviceName());
+        IDLog("Connecting %s\n",property->getDeviceName());
+        ITextVectorProperty *tvp = property->getText();
+        clientTelescope = tvp->tp[0].text;
+        clientCamera = tvp->tp[1].text;
+        clientFocuser = tvp->tp[2].text;
+
+        telescopeDevice = getDevice(clientTelescope);
+        cameraDevice = getDevice(clientCamera);
+        focuserDevice = getDevice(clientFocuser);
         connectDevice(clientCamera);
-        return;
-    }
-    if (strcmp(property->getDeviceName(), clientFocuser) == 0 && strcmp(property->getName(), "CONNECTION") == 0)
-    {
         connectDevice(clientFocuser);
+        connectDevice(clientTelescope);
+        setBLOBMode(B_ALSO, clientCamera, nullptr);
+
+        /*watchDevice(HICDevice->getDeviceName());
+        watchDevice(clientCamera);
+        watchDevice(clientFocuser);
+        watchProperty(clientTelescope,"CONNECTION");*/
+
+
         return;
     }
-    if (strcmp(property->getDeviceName(), clientFocuser) == 0 && strcmp(property->getName(), "ABS_FOCUS_POSITION") == 0)
+    /*if (strcmp(property->getDeviceName(), clientFocuser) == 0 && strcmp(property->getName(), "ABS_FOCUS_POSITION") == 0)
     {
         INumberVectorProperty *focuser_pos = nullptr;
         focuser_pos = focuserDevice->getNumber("ABS_FOCUS_POSITION");
         focuser_pos->np[0].value = postarget;
         sendNewNumber(focuser_pos);
         return;
+    }*/
+
+}
+/**************************************************************************************
+**
+***************************************************************************************/
+void MyClient::newSwitch(ISwitchVectorProperty *svp)
+{
+    IDLog("Client receiving new switch %s %s ...\n", svp->device,svp->name);
+
+    if (strcmp(svp->device, "HIC Focuser" ) == 0 && strcmp(svp->name, "CONNECTION") == 0)
+    {
+        //IDLog("connection %s %i ...\n", svp->sp[0].name,svp->sp[0].s);
+        //IDLog("connection %s %i ...\n", svp->sp[1].name,svp->sp[1].s);
+        if (svp->sp[1].s==ISS_ON) HICClientRunning=false;
+    }
+
+}
+/**************************************************************************************
+**
+***************************************************************************************/
+void MyClient::newLight(ILightVectorProperty *lvp)
+{
+    IDLog("Client receiving new light %s ...\n", lvp->name);
+
+    if (strcmp(lvp->device, "HIC Focuser" ) == 0 && strcmp(lvp->name, "xxx") == 0)
+    {
+        // do stuff
     }
 
 }
 
+
+/**************************************************************************************
+**
+***************************************************************************************/
+void MyClient::newText(ITextVectorProperty *tvp)
+{
+    IDLog("Client receiving new text %s ...\n", tvp->name);
+
+    if (strcmp(tvp->device, "HIC Focuser" ) == 0 && strcmp(tvp->name, "CONNECTION") == 0)
+    {
+        //do stuff
+    }
+
+}
 /**************************************************************************************
 **
 ***************************************************************************************/
 void MyClient::newNumber(INumberVectorProperty *nvp)
 {
-    if (strcmp(nvp->device, clientFocuser) == 0 && strcmp(nvp->name, "ABS_FOCUS_POSITION") == 0)
+    IDLog("Client receiving new number %s ...\n", nvp->name);
+
+    /*if (strcmp(nvp->device, clientFocuser) == 0 && strcmp(nvp->name, "ABS_FOCUS_POSITION") == 0)
     {
         if (nvp->np[0].value == postarget)
         {
@@ -170,7 +222,7 @@ void MyClient::newNumber(INumberVectorProperty *nvp)
             if (stage==1) stage=2;
         }
 
-    }
+    }*/
 }
 
 /**************************************************************************************
@@ -181,7 +233,7 @@ void MyClient::newMessage(INDI::BaseDevice *dp, int messageID)
     if (strcmp(dp->getDeviceName(), MYCCD) != 0)
         return;
 
-    IDLog("Recveing message from Server:%s\n", dp->messageQueue(messageID).c_str());
+    //IDLog("Client receiving message from Server:%s\n", dp->messageQueue(messageID).c_str());
 }
 
 /**************************************************************************************
@@ -193,10 +245,7 @@ void MyClient::newBLOB(IBLOB *bp)
     cameraImage.LoadFromBlob(bp);
     IDLog("POS=%i HFD=%f MED=%f\n", postarget, cameraImage.hfd,cameraImage.med);
 
-    focuspoint.hfd = cameraImage.hfd;
-    focuspoint.pos = postarget;
-    focuscurve.push_back(focuspoint);
-    posvector.push_back((double)focuspoint.pos);
+    posvector.push_back((double)postarget);
     hfdvector.push_back((double)cameraImage.hfd);
 
     postarget=postarget+steps;

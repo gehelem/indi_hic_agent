@@ -40,7 +40,7 @@ add_library(polynomialfit ${CMAKE_CURRENT_SOURCE_DIR}/polynomialfit.cpp)
 add_library(indi_hicfocus_client ${CMAKE_CURRENT_SOURCE_DIR}/indi_hicfocus_client.cpp)
 
 add_executable(indi_hicfocus_agent ${hic_SRCS})
-target_link_libraries(indi_hicfocus_agent indidriver indiclient image indi_hicfocus_client polynomialfit ${INDI_LIBRARIES} ${CFITSIO_LIBRARIES} ${ZLIB_LIBRARY}  ${NOVA_LIBRARIES} ${GSL_LIBRARIES} ${ZLIB_LIBRARY} ${CIMG_LIBRARIES} ${OpenCV_LIBS} z -pthread)
+target_link_libraries(indi_hicfocus_agent indidriver indiclient  indi_hicfocus_client polynomialfit image ${INDI_LIBRARIES} ${CFITSIO_LIBRARIES} ${ZLIB_LIBRARY}  ${NOVA_LIBRARIES} ${GSL_LIBRARIES} ${ZLIB_LIBRARY} ${CIMG_LIBRARIES} ${OpenCV_LIBS} z -pthread)
 
 install(TARGETS indi_hicfocus_agent RUNTIME DESTINATION bin)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/indi_hicfocus_agent.xml DESTINATION ${INDI_DATA_DIR})

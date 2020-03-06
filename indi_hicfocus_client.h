@@ -22,7 +22,8 @@
 #include "image.h"
 
 
-void HICClientStart(const char *hostname, unsigned int port,char *camera,char *focuser,int min, int max, int step,int sec);
+
+void HICClientStart(void);
 void HICClientThread(void *arg);
 void HICClientStop(void);
 
@@ -39,15 +40,18 @@ class MyClient : public INDI::BaseClient
     virtual void newProperty(INDI::Property *property);
     virtual void removeProperty(INDI::Property */*property*/) {}
     virtual void newBLOB(IBLOB *bp);
-    virtual void newSwitch(ISwitchVectorProperty */*svp*/) {}
+    virtual void newSwitch(ISwitchVectorProperty *lvp);
     virtual void newNumber(INumberVectorProperty *nvp);
     virtual void newMessage(INDI::BaseDevice *dp, int messageID);
-    virtual void newText(ITextVectorProperty */*tvp*/) {}
-    virtual void newLight(ILightVectorProperty */*lvp*/) {}
+    virtual void newText(ITextVectorProperty *tvp);
+    virtual void newLight(ILightVectorProperty *lvp);
     virtual void serverConnected() {}
     virtual void serverDisconnected(int /*exit_code*/) {}
 
   private:
+    INDI::BaseDevice *HICDevice;
     INDI::BaseDevice *cameraDevice;
     INDI::BaseDevice *focuserDevice;
+    INDI::BaseDevice *telescopeDevice;
+    HICImage CCDImage;
 };

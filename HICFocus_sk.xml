@@ -1,0 +1,38 @@
+<INDIDriver>
+
+<defTextVector device="HIC Focus" name="HICFOCUS_DEVICES" label="Devices" group="HIC Controls" state="Idle" perm="rw" timeout="0">
+    <defText name="HICFOCUS_DEVICES_MOUNT" label="Mount">Telescope Simulator</defText>
+    <defText name="HICFOCUS_DEVICES_CAMERA" label="Camera">CCD Simulator</defText>
+    <defText name="HICFOCUS_DEVICES_FOCUSER" label="Focuser">Focuser Simulator</defText>
+</defTextVector>
+
+<defLightVector device="HIC Focus" name="HICFOCUS_STATUS" label="Actions Status" group="HIC Controls" state="Idle" timeout="0" perm="rw">
+    <defLight name="HICFOCUS_STATUS_CONNECTING" label="Connecting" >Idle</defLight>
+    <defLight name="HICFOCUS_STATUS_FOCUSING"   label="Focusing"   >Idle</defLight>
+</defLightVector>
+
+<defSwitchVector device="HIC Focus" name="HICFOCUS_COARSE" label="Auto focus (Coarse)" group="HIC Controls" state="Idle" perm="rw" rule="OneOfMany" timeout="60">
+    <defSwitch name="HICFOCUS_COARSE_START" label="Start" >Off</defSwitch>
+    <defSwitch name="HICFOCUS_COARSE_STOP"  label="Stop" >Off</defSwitch>
+</defSwitchVector>
+
+<defSwitchVector device="HIC Focus" name="HICFOCUS_FINE" label="Auto focus (Fine)" group="HIC Controls" state="Idle" perm="rw" rule="OneOfMany" timeout="60">
+    <defSwitch name="HICFOCUS_FINE_START" label="Start" >Off</defSwitch>
+    <defSwitch name="HICFOCUS_FINE_STOP"  label="Stop" >Off</defSwitch>
+</defSwitchVector>
+
+<defNumberVector device="HIC Focus" name="HICFOCUS_PARAMS" label="Exposure" group="HIC Controls" state="Idle" perm="rw" timeout="0">
+    <defNumber name="HICFOCUS_PARAMS_EXPOSURE" label="Exp. duration (s)" format="%5.2f" min="0" max="60" step="1">100</defNumber>
+    <defNumber name="HICFOCUS_PARAMS_POSMIN"   label="Min position"      format="%5f" min="0" max="100000" step="100">25000</defNumber>
+    <defNumber name="HICFOCUS_PARAMS_POSMAX"   label="Max position"      format="%5f" min="0" max="100000" step="100">50000</defNumber>
+    <defNumber name="HICFOCUS_PARAMS_STEPS"    label="Steps"             format="%4f" min="0" max="100000" step="100">1000</defNumber>
+</defNumberVector>
+
+<defNumberVector device="HIC Focus" name="HICFOCUS_IMG" label="Image stats" group="HIC Controls" state="Idle" perm="ro" timeout="0">
+    <defNumber name="HICFOCUS_IMAGE_HFD" label="Image avg HFD" format="%5.2f">-1</defNumber>
+    <defNumber name="HICFOCUS_IMAGE_MIN" label="Image min"     format="%5.2f">-1</defNumber>
+    <defNumber name="HICFOCUS_IMAGE_MAX" label="Image max"     format="%5.2f">-1</defNumber>
+    <defNumber name="HICFOCUS_IMAGE_AVG" label="Image avg"     format="%5.2f">-1</defNumber>
+</defNumberVector>
+
+</INDIDriver>
